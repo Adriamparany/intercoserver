@@ -2,35 +2,95 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    page
     {% if app.user %}
-        <div class="mb-3">
-            You are logged in as {{ app.user.username }}, <a href="{{ path('app_logout') }}">Logout</a>
-        </div>
-        <div id="content">
-        </div>
+        <div class="mb-3" id="logged">
+            {#
+            <pre>
+                {{ dump(app.request.headers) }}
+            </pre>
+            #}
+            {# Vous êtes connecté en tant que {{ app.user.username }}, <a href="{{ path('app_logout') }}">Se deconnecter</a> #}
+            {% set header = app.request.headers %}
+            {% set referer = header.get('referer') %}
+            {% if 'login' in referer %}
+                {% set referer = referer|replace({'login':'logout'}) %}
+            {% else %}
+                {% set referer = referer ~ 'log/new/'~ app.user.username ~ '/logout' %}
+            {% endif %}
+            
+            {#{{ dump(referer) }}#}
+            Vous êtes connecté en tant que {{ app.user.username }}, Veuillez ne pas oublier de <a href="{{ referer }}">vous deconnecter</a> à la fin de votre visite.
+        </div> 
+
+        <div id="content"><div>
+        {% else %}
+            Vous n'êtes pas autorisé à voire le contenu
     {% endif %}
+    
+     
 {% endblock %}
+
 
 {% block javascripts %} 
     {{ parent() }}
     <script>
-
     window.onload = function() {
+        var fonctionuser = "{{ (app.user.fonctionuser is defined) ? app.user.fonctionuser : '' }}"
+        fonctionuser = fonctionuser.replace(/\s/g, '')
+        fonctionuser = fonctionuser.toLowerCase()
+        var codique = "{{ (app.user.codique is defined) ? app.user.codique : '' }}"
+        var username = "{{ (app.user.username is defined) ? app.user.username : '' }}"
+        var accesuser = "{{ (app.user.accesuser is defined) ? app.user.accesuser : '' }}"
+        
+        switch(username) {
+        case "cp_vakmen":
+            codique = "7"+codique;
+            break;
+        case "cp_sofia":
+            codique = "8"+codique;
+            break;
+        case "cp_ihorombe":
+            codique = "9"+codique;
+            break;
+        case "cp_androy":
+            codique = "A"+codique;
+            break;
+        default:
+            codique = codique;
+        }                          
+        var urltxt = '/res/'+fonctionuser+'/'+codique+'/'+username
+        urltxt = urltxt.replace(/\s/g, '');//remove space
+        //alert(urltxt);
+        //console.log(urltxt)
+        //console.log(accesuser)
         $.ajax({
-            url: '/res',
+            async: true,
+            url: urltxt,
             method: 'POST',
-            //contentType: "application/json; charset=utf-8"
-            contentType: "html"
-        }).then(function(response) {
-           //$('#content').html($(response).find('table-responsive').html());//This is deprecated
-            var content = $('<div>').append(response).find('.table-responsive');
-            $('#content').html( content );
-            
-        });
-    }
-    
+            contentType: "application/json; charset=utf-8",
+            //contentType: "html",
+            beforeSend: function () {
+
+            },
+            success: function(response) {
+            //console.log(response)
+            //$('#logged').append(response);
+            //$('#content').load("res")
+            //$('#content').load("resapidiv")
+            //var content = $('<div>').load("resapidiv")
+            //console.log(content)
+            //location.reload(true);
+            var content = $('<div>').append(response).find('div#content');
+            $('#logged').append(content)
+          
+            $('#legende').append($('#legende2').html())
+            $('#legende2').remove()
+            },
+        });        
+    } 
     
     </script>
 {% endblock %}
+
+
 

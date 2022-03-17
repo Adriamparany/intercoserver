@@ -1,14 +1,38 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-{#
-    {% if user.isLoggedIn %}
-        Hello {{ user.name }}!
+   
+ <h1>{#{{ page }}#}</h1>
+ 
+    {% if app.user %}
+        {#
+        <div class="mb-3">
+            Bienvenu {{ app.user.username }}, <a href="{{ path('app_logout') }}">Se deconnecter</a>
+            <a class="nav-link" href="{{path('page')}}"><i class="fa fa-fw fa-search"></i>Suivi</a>
+        </div>
+        #}
+        <div class="mb-3" id="logged">
+            {#
+            <pre>
+                {{ dump(app.request.headers) }}
+            </pre>
+            #}
+            {# Vous êtes connecté en tant que {{ app.user.username }}, <a href="{{ path('app_logout') }}">Se deconnecter</a> #}
+            {% set header = app.request.headers %}
+            {% set referer = header.get('referer') %}
+            {% set host = header.get('host') %}
+            {% if 'login' in referer %}
+                {% set referer = referer|replace({'login':'logout'}) %}
+            {% else %}
+                {% set referer = '/log/new/'~ app.user.username ~ '/logout' %}
+            {% endif %}
+            
+            {#{{ dump(referer) }}#}
+            Vous êtes connecté en tant que {{ app.user.username }}, Veuillez ne pas oublier de <a href="{{ referer }}">vous deconnecter</a> à la fin de votre visite.
+            <a class="nav-link" href="{{path('page')}}"><i class="fa fa-fw fa-search"></i>Suivi</a>
+        </div> 
+    {% else %}
+        <a href="{{ path('app_login') }}">Se connecter</a>
     {% endif %}
-    #}
-    
- <h1>{{ page }}</h1>
-
-    
 {% endblock %}
 

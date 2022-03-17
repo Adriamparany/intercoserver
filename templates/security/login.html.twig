@@ -9,16 +9,38 @@
     {% endif %}
 
     {% if app.user %}
+        {#
         <div class="mb-3">
-            You are logged in as {{ app.user.username }}, <a href="{{ path('app_logout') }}">Logout</a>
+            Vous êtes déjà connecté en tant que {{ app.user.username }}, <a href="{{ path('app_logout') }}">Se deconnecter</a>
             <a class="nav-link" href="{{path('page')}}"><i class="fa fa-fw fa-search"></i>Suivi</a>
         </div>
+        #}
+        <div class="mb-3" id="logged">
+            {#
+            <pre>
+                {{ dump(app.request.headers) }}
+            </pre>
+            #}
+            {# Vous êtes connecté en tant que {{ app.user.username }}, <a href="{{ path('app_logout') }}">Se deconnecter</a> #}
+            {% set header = app.request.headers %}
+            {% set referer = header.get('referer') %}
+            {% set host = header.get('host') %}
+            {% if 'login' in referer %}
+                {% set referer = referer|replace({'login':'logout'}) %}
+            {% else %}
+                {% set referer = '/log/new/'~ app.user.username ~ '/logout' %}
+            {% endif %}
+            
+            {#{{ dump(referer) }}#}
+            Bienvenu, vous êtes déjà connecté en tant que {{ app.user.username }}, <a href="{{ referer }}">Se deconnecter</a>
+            <a class="nav-link" href="{{path('page')}}"><i class="fa fa-fw fa-search"></i>Suivi</a>
+        </div> 
     {% else %}
         <form method="post" action="{{ path('app_login') }}">
-            <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-            <label for="inputUsername">Username</label>
+            <h1 class="h3 mb-3 font-weight-normal">Veuillez vous connecter</h1>
+            <label for="inputUsername">Utilisateur</label>
             <input type="text" value="{{ last_username }}" name="username" id="inputUsername" class="form-control" autocomplete="username" required autofocus>
-            <label for="inputPassword">Password</label>
+            <label for="inputPassword">Mots de passe</label>
             <input type="password" name="password" id="inputPassword" class="form-control" autocomplete="current-password" required>
 
             <input type="hidden" name="_csrf_token"
@@ -36,7 +58,7 @@
                 #}
 
             <button class="btn btn-lg btn-primary" type="submit">
-                Sign in
+                Se connecter
             </button>
         </form>
     {% endif %}

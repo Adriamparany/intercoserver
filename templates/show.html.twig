@@ -1,46 +1,427 @@
 {% extends 'base.html.twig' %}
-
+{% set countYMD = {'years':0, 'months':0, 'weeks':0, 'lessOneWeek':0, 'days':0} %}
+{% set dico = {codique:"Codique",dateval:"Date de validation", date_validation:"Date de validation", nombureau:"Bureau"} %}
 {% block body %}
-    show
-    {% if results is defined and results|length > 0 %}
-        <div class="table-responsive">
-            {{ results|length  }} lignes
-
+    <div id="content">
+        {% if results is defined and results|length > 0 %}
+            {{ results|length  }} lignes   
             <input type="text" name="search" placeholder="Rechercher..">
-
-            <!--Table-->
-            <table class="table table-striped">
-                <!--Table head-->
-                <thead>
-                <tr>
-                    <th>#</th>
-                    {% for resultkey,value in results[0] %}
-                        <th class="th-lg"> {{ resultkey }} </th>
-                    {% endfor %}
-                </tr>
-                </thead>
-                <!--Table head-->
-
-                <!--Table body-->
-                <tbody id="myTable">
-                    {% for indice,arrayRes in results %}
-                        <tr>
-                            <th scope="row"> {{ indice + 1 }}</th>
-                            {% for key,value in arrayRes %}
-                                {% if key == 'dateval' %}
-                                    <td>{{ value|format_datetime('short', 'none', locale='fr') }}</td> 
-                                {% else %}
-                                    <td>{{ value }}</td>
+            <div id="legende"></div>
+            <div class="table-responsive">
+                <!--Table-->
+                <table class="table table-striped">
+                    <!--Table head-->
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        {% for resultkey,value in results[0] %}
+                            {% if resultkey == 'dirpm' %}
+                                <th class="th-lg">
+                                    <div id="dirpm" class="dropdown">  {{ resultkey }} </div>
+                                    <select id="myDropdown" class="dropdown-content">
+                                    <option value="">Tous</option>
+                                        <option value="Antananarivo">Antananarivo</option>
+                                        <option value="Antsiranana">Antsiranana</option>
+                                        <option value="Mahajanga">Mahajanga</option>
+                                        <option value="Toamasina">Toamasina</option>
+                                        <option value="Fianarantsoa">Fianarantsoa</option>
+                                        <option value="Toliara">Toliara</option>
+                                        <option value="CPVakmen">CP Vakmen</option>
+                                        <option value="CPSofia">CP Sofia</option>
+                                        <option value="CPAnosyAndroy">CP AnosyAndroy</option>
+                                        <option value="CPIhorombe">CP Ihorombe</option>
+                                        <option value="CPAlaotraMangoro">CP Alaotra-Mangoro</option>
+                                        
+                                    </select>
+                                </th>
+                            {% elseif resultkey not in ["MA", "numeraire"]  %} 
+                            {# {% else %} #}
+                                {% if resultkey in dico|keys %}
+                                    <th class="th-lg"> {{ dico[resultkey] }} </th> 
+                                {% else %} 
+                                    <th class="th-lg"> {{ resultkey }} </th> 
                                 {% endif %} 
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                    
-                </tbody>
-                <!--Table body-->
-            </table>
-            <!--Table-->
-        </div>
-    {% endif %}  
-{% endblock %}
+                            {% endif %}                           
+                        {% endfor %}
+                        <th>Observations</th>
+                        <th></th>
+                        <th>Notifier</th>
+                    </tr>
+                    </thead>
+                    <!--Table head-->
 
+                    <!--Table body-->
+                    <tbody id="myTable">
+                        {% for indice,arrayRes in results %}
+                            <tr>
+                                <th scope="row"> {{ indice + 1 }}</th>
+                                {% set startDate = date() %}
+                                {% for key,value in arrayRes %}
+                                    {% if key == 'date_validation' %}
+                                        {% set startDate = value|format_date() %}
+                                        <td>{{ value|format_datetime('short', 'none', locale='fr') }}</td>
+                                    {% elseif key not in ["MA", "numeraire"] %} 
+                                    {# {% else %} #}
+                                        {% if key == 'codique' %}
+                                            <td><a data-bs-toggle="tooltip" title="Voir les dix derniers validations" href="/page/{{ value }}">{{ value }}</a></td>
+                                        {% else %}
+                                            <td>{{ value }}</td>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% set difference = date( "now"|date() ).diff(date(startDate)) %}
+                                {% set totalDays = difference.days %}
+                                {% set leftHours = difference.h %}
+                                {% set leftDays = difference.d %}
+                                {% set leftMonths = difference.m %}
+                                {% set leftYears = difference.y %}
+
+                                {% set bgcolor = 'none' %}
+                                {% if leftYears > 0 %}
+                                    {% set bgcolor = '#F73107' %}
+                                    {% set countYMD = countYMD|merge({'years': (countYMD.years + 1)}) %}
+                                {% elseif leftMonths > 0 %}
+                                    {% set bgcolor = 'blue' %}
+                                    {% set countYMD = countYMD|merge({'months': (countYMD.months + 1)}) %}
+                                {% elseif leftDays > 7 %}
+                                    {% set bgcolor = 'yellow' %}
+                                    {% set countYMD = countYMD|merge({'weeks': (countYMD.weeks + 1)}) %}
+                                {% elseif leftDays > 1 %}
+                                    {% set bgcolor = 'green' %}
+                                    {% set countYMD = countYMD|merge({'lessOneWeek': (countYMD.lessOneWeek + 1)}) %}
+                                {% else %}
+                                    {% set bgcolor = 'none' %}
+                                    {% set countYMD = countYMD|merge({'days': (countYMD.days + 1)}) %}
+                                {% endif %}
+
+                                <td style="background: {{ bgcolor }} ; color: 'white' ">
+                                {{ leftYears }} années
+                                {{ leftMonths }} mois
+                                {{ leftDays }} jours
+                                , soit {{ totalDays }} jours
+                                <br>
+                                Date de la dernière saisie: {{ startDate|format_datetime('short', 'none', locale='fr') }}
+                                </td>
+
+                                {# Let add email-data on email sending #}
+                                {% set nombureau = '' %}
+                                {% set dirpm = '' %}
+                                {% set codique = '' %}
+                                {% set lastValidation  = "now"|date("dd/mm/Y") %}
+                                {% set MA  = 0 %}
+                                {% set numeraire  = 0 %}
+                                {% for key,value in arrayRes %}
+                                    {% if key == 'date_validation' %}
+                                        {% set startDate = value|format_date() %}
+                                        {% set lastValidation = value|format_datetime('short', 'none', locale='fr') %}
+                                    {% elseif key == 'nombureau' %}
+                                        {% set nombureau = value %}
+                                    {% elseif key == 'dirpm' %}
+                                        {% set dirpm = value %}
+                                    {% elseif key == 'codique' %}
+                                        {% set codique = value %}
+                                    {% elseif key == 'MA' %}
+                                        {% set MA = value %}
+                                    {% elseif key == 'numeraire' %}
+                                        {% set numeraire = value %}
+                                    {% endif %}
+                                {% endfor %}
+                                {# end email-data #}
+
+                                <td>
+                                    {# <a href="/accounting/{{ codique }}-{{ nombureau }}-{{ dirpm }}/{{ lastValidation|replace({'/':'-'}) }}">Détails de l'encaisse</a>#} {# Open  "Détails de l'encaisse" in a new page#}
+                                    <a href="" data-toggle="modal" data-target="#accountingsituationmodal" data-codique="{{ codique }}" data-bureau="{{ nombureau }}" data-dirpm="{{ dirpm }}" data-validation="{{ lastValidation|replace({'/':'-'}) }}" data-ma="{{ MA }}">Détails de l'encaisse</a>
+                                    </br><span id="{{ codique }}" class="bg-danger text-warning {{ numeraire <= MA ? 'collapse' : '' }}" >Max autorisé dépassé</span>
+                                </td>
+                                {#<td><a href="/emailform"><i class="fa fa-paper-plane" aria-hidden="true"></i></a></td>#}
+                                {# <td><button type="button" class="btn btn-light" data-toggle="modal" data-target="#exampleModal" data-sender="[email]@paositramalagasy.mg" data-recipient="ddpwebetmultimedia@gmail.com" data-subject="Interco: Situation au " data-msgcontent="Bureau: {{ nombureau }}, Rattachement: {{ dirpm }} &#13;Comptabilité à valider: &#13; {{ leftYears }} années {{ leftMonths }} mois {{ leftDays }} jours"> <i class="fa fa-paper-plane" aria-hidden="true"></i></button></td> #}
+                                <td><button type="button" class="btn btn-light" data-bs-toggle="tooltip" title="Notifier par email" data-toggle="modal" data-target="#exampleModal" data-sender="interco@paositramalagasy.mg" data-recipient="ddpwebetmultimedia@gmail.com" data-subject="Interco: Situation au " data-msgcontent="Bureau: {{ nombureau }}, Rattachement: {{ dirpm }} &#13; La derniére fois que vous avez soumis votre Comptabilité remonte à &#13; {{ leftYears }} années {{ leftMonths }} mois {{ leftDays }} jours"> <i class="fa fa-paper-plane" aria-hidden="true"></i></button></td>
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+                    <!--Table body-->
+                </table>
+                <!--Table-->
+            </div>
+
+        {% endif %}
+        <div id="legende2"><span class="bg-danger year">Rouge:</span> ({{ countYMD.years }}) Retard de plus d'un an , <span class="bg-primary month">Bleue:</span> ({{ countYMD.months }}) Retard de plus d'un mois, <span class="bg-warning week">Jaune:</span> ({{ countYMD.weeks }}) Retard de plus d'une semaine, <span class="bg-success day">Verte:</span> ({{ countYMD.lessOneWeek }}) Moin d'une semaine, <span class="border border-info noday">Aucune:</span> ({{ countYMD.days }}) A jour</div>
+        </br>
+        <!--
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" data-recipient="@mdo">Open modal</button>
+        -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">New message</h5>
+                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="mailing_form" method="POST" action="emailme">
+                        <div class="form-group">
+                            <label for="sender-name" class="col-form-label">Sender:</label>
+                            <input type="email" class="form-control" id="sender-name" name="sender">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label">Recipient:</label>
+                            <input type="text" class="form-control" id="recipient-name" name="recipient">
+                        </div>
+                        <div class="form-group">
+                            <label for="cc-name" class="col-form-label">cc:</label>
+                            <input type="text" class="form-control" id="cc-name" name="cc">
+                        </div>
+                        <div class="form-group">
+                            <label for="subject-name" class="col-form-label">Subject:</label>
+                            <input type="text" class="form-control" id="subject-name" name="subject">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="col-form-label">Message:</label>
+                            <textarea class="form-control" id="message-text" name="message"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                    <button type="button" id="submitForm" data-target="#mailing_form" class="btn btn-primary">Send message</button>
+                </div>
+                </div>
+            </div>
+        </div>      
+        
+        <div class="modal fade" id="accountingsituationmodal"  aria-hidden="true">           
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="formModal_title">DETAILS DE L'ENCAISSE</h4>
+                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
+                    </div>
+                    <div class="modal-body"><table class="table table-striped tbaccounting"></table></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            <div>
+        </div>
+    <div>
+    <script>//cannot be inserted outside the block if not countYMD's values would be zero
+        window.onload = function() {
+            $('#legende').append($('#legende2').html())
+            $('#legende2').remove()
+            /*
+            $('#legende span.year').after('<b> '+ {{ countYMD.years }} + '</b>')
+            $('#legende span.month').after('<b> '+ {{ countYMD.months }} + '</b>')
+            $('#legende span.week').after('<b> '+ {{ countYMD.weeks }} + '</b>')
+            $('#legende span.day').after('<b> '+ {{ countYMD.lessOneWeek }} + '</b>')
+            $('#legende span.noday').after('<b> '+ {{ countYMD.days }} + '</b>')
+            */         
+        }
+
+        $(document).ready(function(e){
+            console.log('document ready on show.html.twig')
+            $('#exampleModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget) // Button that triggered the modal
+                var recipient = button.data('recipient') // Extract info from data-* attributes
+                var sender = button.data('sender')
+
+                var subject = button.data('subject')
+                var today = new Date()
+                var dd = String(today.getDate()).padStart(2, '0')
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+                var yyyy = today.getFullYear()
+                today = dd + '-' + mm + '-' + yyyy
+                subject = subject + today
+
+                // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+                // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+                var message = button.data('msgcontent')
+                message = message + " depuis l'initialisation de la comptabilité du bureau."
+
+                var modal = $(this)
+                modal.find('.modal-title').text('Notifier ' + recipient)
+                modal.find('.form-group>[for="sender-name"]').text('De:')
+                modal.find('.form-group>[for="recipient-name"]').text('à:')
+                modal.find('.form-group>[for="subject-name"]').text('Objet:')
+                modal.find('.modal-footer [data-dismiss="modal"]').text('Fermer')
+                modal.find('.modal-footer .btn-primary').text('Envoyer')
+                modal.find('.modal-body input#recipient-name').val(recipient)
+                modal.find('.modal-body input#sender-name').val(sender)
+                modal.find('.modal-body textarea#message-text').val(message)
+                modal.find('.modal-body input#subject-name').val(subject)
+            })
+
+            //submit
+            $("#mailing_form").on("submit", function(e) {
+                var postData = $(this).serialize();
+                var formURL = $(this).attr("action");
+                var formData = getFormData($(this))
+                console.log(formData);
+                //postData = encodeURI(postData)
+                //postData = postData.replace('/','-')
+                //console.log(postData)
+                //console.log(formURL)
+                $.ajax({
+                    //url: formURL+'/'+postData,
+                    url: "{{ path('emailme') }}",
+                    //url: formURL,
+                    type: "POST",
+                    //data: formData,
+                    data: formData,
+                    contentType: "application/json; charset=utf-8",
+                    success: function(response) {
+                        console.log(response)
+                        $('#exampleModal').modal('toggle');
+                        alert('Email envoyé!');
+                        $('body').removeClass('modal-open');
+                        $('.modal-backdrop').remove();
+                    },
+                    error: function(jqXHR, status, error) {
+                        console.log(status + ": " + error);
+                    }
+                });
+                e.preventDefault();
+            });
+            $("#submitForm").on('click', function() {
+                $("#mailing_form").submit();
+            });
+
+            $('#accountingsituationmodal').on('show.bs.modal', function (event) {
+                var cible = $(event.relatedTarget) // Button that triggered the modal
+                $( ".tbaccounting" ).empty();//empty table
+                $("#accountingsituationmodal .modal-title").empty();
+                var row = ''
+                var totalrow = ''
+                console.log(cible.data('ma'))
+                $.ajax({
+                    url: "{{ path('showaccountingjson') }}",
+                    type: "POST",
+                    data: {codique: cible.data("codique"), date: cible.data("validation")},
+                    contentType: "application/json; charset=utf-8",
+                    success: function(response) {
+                        console.log(response.data)
+                        console.log(response.check)
+                        $("#accountingsituationmodal .modal-body").addClass('row')
+                        $("#accountingsituationmodal .modal-title").text('Détails de l\'encaisse - '+'Bureau: '+cible.data('bureau')+ ' (M.A: ' + numberWithSpaces((cible.data("ma")).toFixed(2))+' ariary)')
+                        var total =  0
+                        var i=0
+                        $.each(response.data[0], function( key, value ) {   
+                            //alert(typeof(value) + key + ": " + value );                    
+                            if(key == 'date'){
+                                var x = new Date(value)
+                                var dd = String(x.getDate()).padStart(2, '0')
+                                var mm = String(x.getMonth() + 1).padStart(2, '0'); 
+                                var yyyy = x.getFullYear()
+                                value = dd + '-' + mm + '-' + yyyy
+                            }else{
+                                if(value != null){         
+                                    value = parseFloat(value) //cast values into number except date
+                                }   
+                            }
+                            
+                            key = key.replace(/_/g, " ")  //replace all "_" with space
+                            var bg = ""
+                            
+                            var printvalue = 0                          
+                            
+                            if (typeof value === 'number'){
+                                if(key.replace(/ /g, "") != 'TotalUV' && key.replace(/ /g, "") != 'MA'){
+                                    total = total + value
+                                    //alert(key)
+                                }
+                                
+                                printvalue = numberWithSpaces(value.toFixed(2))
+                            }else{
+                                printvalue = value
+                            }
+                            console.log(total)
+                            if(isEven(i)){
+                                if(i == 0){
+                                    bg = "fw-bold"
+                                }else{
+                                    bg = "bg-secondary text-white"
+                                }
+                            }else{
+                                bg = "bg-white text-dark"
+                            }
+
+                            //manage printing
+                            if(key != 'MA'){
+                                row = $('<tr>');
+                                row.append($('<td class="'+bg+'" id=' + key + '>').html(key));
+                                row.append($('<td class="'+bg+'" id=' + value + '>').html(printvalue));
+                                row.append($('</tr>'));
+                                $("#accountingsituationmodal .modal-body table").append(row) 
+                                i = i + 1 
+                            }                                          
+                        }); 
+                        total = total.toFixed(2) 
+                        totalrow = $('<tr>');
+                        totalrow.append($('<td class="bg-info">').html("TOTAL"))
+                        totalrow.append($('<td class="bg-info" id="total">').html(numberWithSpaces(total)))
+                        totalrow.append($('</tr>'));
+                        $("#accountingsituationmodal .modal-body table").append(totalrow) 
+                    },
+                    error: function(jqXHR, status, error) {
+                        console.log(status + ": " + error);
+                    }
+                })
+            }) 
+            //alert on MAXIMUM AUTORISE
+            //alert('kaiz e')
+            
+            //$("#myTable a[data-target='#accountingsituationmodal']").html('fetra')          
+        })
+
+        //get all data from form, returns json object
+        function getFormData($form){
+            var unindexed_array = $form.serializeArray();
+            var indexed_array = {};
+
+            $.map(unindexed_array, function(n, i){
+                indexed_array[n['name']] = n['value'];
+            });
+            return indexed_array;
+        }
+
+        function filterFunction() {
+            var input, filter, ul, li, a, i;
+            input = document.getElementById("myInput");
+            filter = input.value.toUpperCase();
+            div = document.getElementById("myDropdown");
+            a = div.getElementsByTagName("a");
+            for (i = 0; i < a.length; i++) {
+                txtValue = a[i].textContent || a[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                a[i].style.display = "";
+                } else {
+                a[i].style.display = "none";
+                }
+            }
+        }
+
+        function isEven(n) {
+            return n % 2 == 0;
+        }
+
+        function isOdd(n) {
+            return Math.abs(n % 2) == 1;
+        }
+
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function numberWithSpaces(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+    </script>
+    {#
+    <pre>
+        {{ dump(countYMD) }}
+    </pre>
+    #}
+{% endblock %}

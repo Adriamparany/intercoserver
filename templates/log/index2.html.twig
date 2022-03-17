@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+{% set countYMD = {'years':0, 'months':0, 'weeks':0, 'lessOneWeek':0, 'days':0} %}
+{% set dico = {codique:"Codique",datelog:"Date", dateval:"Date de validation", date_validation:"Date de validation", nombureau:"Bureau"} %}
+{% block body %}
+    <div id="content">
+        {% if results is defined and results|length > 0 %}
+            {#
+            <pre>
+                {{ dump(results) }}
+            </pre>
+            #}
+            {{ results|length  }} lignes
+            <input type="text" name="search" placeholder="Filtrer votre recherche ici..">
+            <a class="nav-link" href="{{path('page')}}"><i class="fa fa-fw fa-search"></i>Suivi</a>
+            <div class="table-responsive">
+                <!--Table-->
+                <table class="table table-striped">
+                    <!--Table head-->
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Utilisateur</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <!--Table head-->
+
+                    <!--Table body-->
+                    <tbody id="myTable">
+                        {% for indice,arrayRes in results %}
+                            <tr>
+                                <th scope="row"> {{ indice + 1 }}</th>
+                                {% for key,value in arrayRes %}
+                                    {% if key == 'datelog' %}
+                                        {#<td>{{ value|format_datetime('long', 'none', locale='fr') }}</td>#}
+                                        <td>{{ value ? value|date('d-m-Y H:i:s') : '' }}</i></td>
+                                    {% elseif key == 'id' %}
+                                        <td>
+                                            <a data-bs-toggle="tooltip" title="Détails sur l'authentification" href="/log/{{ value }}"><i class="fa fa-plus"></i> </a>
+                                            {% if isEditable is defined and isEditable %}
+                                                <a href="{{ path('log_edit', {'id': log.id}) }}">edit</a>
+                                            {% endif %}
+                                        </td>
+                                    {% elseif key == 'username' %}
+                                        <td>
+                                            <a data-bs-toggle="tooltip" title="Détails sur l'authentification" href="/log/details/{{ value }}">{{ value }}</i> </a>
+                                        </td>
+                                    {% elseif key == 'logtype' %}
+
+                                    {% else %}
+                                        <td>{{ value }}</td>
+                                    {% endif %}
+                                {% endfor %}
+                                {#}
+                                <td>
+                                    <a href="{{ path('log_show', {'id': log.id}) }}">show</a>
+                                    {% if isEditable is defined and isEditable %}
+                                        <a href="{{ path('log_edit', {'id': log.id}) }}">edit</a>
+                                    {% endif %}
+                                </td>
+                                #}
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+                    <!--Table body-->
+                </table>
+                <!--Table-->
+            </div>
+            <a href="{{ path('log_index') }}">Retour à la list</a>
+
+        {% endif %}
+
+    <div>
+    <script>//cannot be inserted outside the block if not countYMD's values would be zero
+        $(document).ready(function(e){
+            console.log('document ready on log/index2.html.twig')
+        })
+
+    </script>
+    
+{% endblock %}

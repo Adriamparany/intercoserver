@@ -6,10 +6,10 @@
         {# Run `composer require symfony/webpack-encore-bundle`
            and uncomment the following Encore helpers to start using Symfony UX #}
 
-        
-        {% block stylesheets %}         
+
+        {% block stylesheets %}
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-            
+
 
             <!-- Template Main CSS File -->
             {#<link href="{{asset('css/myapp.css')}}" rel="stylesheet">#}
@@ -17,31 +17,45 @@
         {% endblock %}
 
         {#block js nafindra ao am body#}
-        
     </head>
-    <body> 
+    <body id="contenu">
+
         {% block navigation %}
-            <nav class="navbar navbar-expand-md bg-dark navbar-dark">    
-            <a class="navbar-brand" href="{{path('homepage')}}">Compta</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="collapsibleNavbar">
-                <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{path('homepage')}}"><i class="fa fa-fw fa-home"></i>Acceuil</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{path('showvalidation')}}"><i class="fa fa-fw fa-search"></i>Suivi</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{path('homepage_show', {slug:'contact'})}}"><i class="fa fa-fw fa-envelope"></i>Contact</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{path('app_login')}}"><i class="fa fa-fw fa-user"></i>Login</a>
-                </li>    
-                </ul>
-            </div>  
+            <nav class="navbar navbar-expand-md bg-dark navbar-dark">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                    <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{path('homepage')}}"><i class="fa fa-fw fa-home"></i>Acceuil</a>
+                    </li>
+
+                    {#
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{path('homepage_show', {slug:'contact'})}}"><i class="fa fa-fw fa-envelope"></i>Contact</a>
+                    </li>
+                    #}
+
+                    {% if app.user%}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{path('app_login')}}"><i class="fa fa-fw fa-user"></i>Se déconnecter</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{path('app_login')}}"><i class="fa fa-fw fa-user"></i>Se connecter</a>
+                        </li>
+                    {% endif %}
+
+                    {% if app.user%}
+                        {% if app.user.username == 'dg' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{path('log_index')}}"><i class="fa fa-history" aria-hidden="true"></i>Contrôle </a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                    </ul>
+                </div>
             </nav>
             <br>
 
@@ -50,30 +64,31 @@
             {#
             <ul id="navigation">
                 {% for key,value in navigation %}
-                
+
                     {% if key =='href' %}
-                        <li><a {{key}}="{{ value }}">  
+                        <li><a {{key}}="{{ value }}">
                     {% else %}
                         {{ value }}
                         </a></li>
                     {% endif %}
-                    
-                
+
+
                 {% endfor %}
             </ul>
             #}
         {% endblock %}
-        
-        {% block body %}<h5>this is the body</h5>{% endblock %}
-        <footer class="mt-5 p-3 text-center bg-light">
-            Made with <i style="color: red;" class="fa fa-heart"></i> by the guys and gals at <a style="color: #444; text-decoration: underline;" href="https://symfonycasts.com">SymfonyCasts</a>
-        </footer>
 
+        {% block body %}<h5>this is the body</h5>{% endblock %}
+
+        {% block content %}{% endblock %}
+        <footer class="mt-5 p-3 text-center bg-light">
+            Credit: ftr <a style="color: #444; text-decoration: underline;" href="www.paositramalagasy.mg">Paositra Malagasy</a>
+        </footer>
         {% block javascripts %}
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
             <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-            {{ encore_entry_script_tags('app') }} 
+            {{ encore_entry_script_tags('app') }}
             {#<script src="{{asset('js/myapp.js')}}"></script>  #}
             {#<script src="js/myapp.js"></script> #}
         {% endblock %}
